@@ -7,7 +7,7 @@ import { AppointmentRepository } from '../repositories/appointment.repository';
 
 // JWT imports
 import { PassportModule } from '@nestjs/passport';
-import { JwtStrategy } from 'apps/auth/strategies/jwt.strategy'; // Adjust path as needed
+import { JwtStrategy } from '../strategies/jwt.strategy';
 
 @Module({
   imports: [

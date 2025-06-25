@@ -6,6 +6,8 @@ import {
   Body,
   UseGuards,
   UnauthorizedException,
+  Patch,
+  Delete,
 } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { AppointmentsService } from './appointment.service';
@@ -15,6 +17,7 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'apps/auth/guards/jwt-auth.guard';
 import { Public } from 'apps/auth/decorators/public.decorator';
 import { CurrentUser } from 'libs/common/decorators/current-user.decorator';
+import { UpdateAppointmentDto } from '../dto/update-appointment.dto';
 
 @ApiTags('Appointments')
 @ApiBearerAuth()
@@ -32,6 +35,25 @@ export class AppointmentsController {
     return created(appointment, 'Appointment created successfully');
   }
 
+  @Patch(':id')
+  async update(
+    @Param('id') id: string,
+    @CurrentUser() user: { id: string },
+    @Body() dto: UpdateAppointmentDto,
+  ) {
+    const appointment = await this.appointmentsService.findById(id);
+
+    // ✅ Make sure the user owns this appointment
+    if (appointment.userId !== user.id) {
+      throw new UnauthorizedException(
+        'Access denied to update this appointment',
+      );
+    }
+
+    const updated = await this.appointmentsService.update(id, dto);
+    return success(updated, 'Appointment updated successfully');
+  }
+
   @Get()
   async findAll(@CurrentUser() user: { id: string }) {
     const all = await this.appointmentsService.findByUserId(user.id);
@@ -45,6 +67,21 @@ export class AppointmentsController {
       throw new UnauthorizedException('Access denied to this appointment');
     }
     return success(appointment, 'Appointment fetched successfully');
+  }
+
+  @Delete(':id')
+  async delete(@Param('id') id: string, @CurrentUser() user: { id: string }) {
+    const appointment = await this.appointmentsService.findById(id);
+
+    // Ensure only the owner can delete
+    if (appointment.userId !== user.id) {
+      throw new UnauthorizedException(
+        'Access denied to delete this appointment',
+      );
+    }
+
+    await this.appointmentsService.delete(id);
+    return success(null, 'Appointment deleted successfully');
   }
 
   @Public()

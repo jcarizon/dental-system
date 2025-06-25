@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Request } from '@nestjs/common';
+import { Controller, Post, Body, Get, Request, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from '../dto/login.dto';
 import { RegisterDto } from '../dto/register.dto';
@@ -7,6 +7,7 @@ import { success, created } from 'libs/common/response';
 import { Public } from '../decorators/public.decorator';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
 import { SafeUser } from 'apps/users/mappers/user.mapper';
+import { Response } from 'express';
 
 export interface LoginResponse {
   accessToken: string;
@@ -41,6 +42,15 @@ export class AuthController {
   @Get('profile')
   getProfile(@Request() req: Request & { user: JwtPayload }) {
     return success(req.user, 'Authenticated profile');
+  }
+
+  @Public()
+  @Post('logout')
+  logout(@Res() res: Response) {
+    // Optional: clear a cookie if you were using one
+    // res.clearCookie('jwt', { httpOnly: true, secure: true });
+
+    return res.status(200).json(success(null, 'Logged out successfully'));
   }
 
   @Public()
